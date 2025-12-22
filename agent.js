@@ -1,4 +1,4 @@
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { ChatOpenAI } from "@langchain/openai";
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { ChatPromptTemplate, MessagesPlaceholder } from "@langchain/core/prompts";
 import { AgentExecutor, createToolCallingAgent } from "langchain/agents";
@@ -47,19 +47,31 @@ const listRecentArticlesTool = new DynamicStructuredTool({
 
 const tools = [getUserProfileTool, suggestArticlesTool, listRecentArticlesTool];
 
-export async function createOrchestratorAgent() {
-  const llm = new ChatGoogleGenerativeAI({
-    modelName: "gemini-1.5-flash",
-    temperature: 0,
-    apiKey: process.env.GOOGLE_API_KEY,
+const CHAT_SYSTEM_PROMPT = "You are the Bixso Orchestrator, a friendly and professional AI assistant. " +
+                           "Your goal is to help users by providing information and recommendations in a warm, conversational manner.\n\n" +
+                           "Guidelines for your response:\n" +
+                           "1. **Tone**: Be helpful, natural, and engaging. Avoid overly formal or robotic lists unless requested.\n" +
+                           "2. **Content**: When presenting user information, summarize it gracefully. Instead of a raw list, say things like 'I see you are a Senior Developer based in HCM...' \n" +
+                           "3. **Cleanliness**: Do not show raw URLs, image paths, or technical metadata (like profile picture links) unless the user specifically asks for them.\n" +
+                           "4. **Personalization**: Use the user's name if available to make the conversation feel personal.";
+
+const RECOMMENDATION_SYSTEM_PROMPT = "You are the Bixso Recommendation Engine. Your workflow is:\n" +
+                                     "1. Use 'get_user_profile' with the provided 'userId' to understand the user's interests.\n" +
+                                     "2. Based on their profile, use 'suggest_articles' to find relevant content.\n" +
+                                     "3. If the user has no specific interests, use 'list_recent_articles'.\n" +
+                                     "CRITICAL: Your final response MUST be ONLY a JSON array of article unique IDs. " +
+                                     "Do not include any conversational text. " +
+                                     "Example output: [\"article_id_1\", \"article_id_2\"]";
+
+async function createAgent(systemPrompt, temperature = 0) {
+  const llm = new ChatOpenAI({
+    modelName: "gpt-4o-mini",
+    temperature: temperature,
+    apiKey: process.env.OPENAI_API_KEY,
   });
 
   const prompt = ChatPromptTemplate.fromMessages([
-    ["system", "You are the Bixso Orchestrator. Your workflow is:\n" +
-               "1. Use 'get_user_profile' with the provided 'userId' to understand the user's interests.\n" +
-               "2. Based on their profile, use 'suggest_articles' to find relevant content.\n" +
-               "3. If the user has no specific interests, use 'list_recent_articles'.\n" +
-               "4. Present the suggestions in a helpful, personalized way."],
+    ["system", systemPrompt],
     new MessagesPlaceholder("chat_history"),
     ["human", "User ID: {userId}\n\nRequest: {input}"],
     new MessagesPlaceholder("agent_scratchpad"),
@@ -75,5 +87,13 @@ export async function createOrchestratorAgent() {
     agent,
     tools,
   });
+}
+
+export async function createChatAgent() {
+  return createAgent(CHAT_SYSTEM_PROMPT, 0.7);
+}
+
+export async function createRecommendationAgent() {
+  return createAgent(RECOMMENDATION_SYSTEM_PROMPT);
 }
 

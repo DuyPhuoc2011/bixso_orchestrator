@@ -6,7 +6,7 @@ This is a Langchain-powered orchestrator agent designed to integrate with a Bubb
 
 - Node.js 18+
 - A Google Cloud Platform (GCP) project with Firestore enabled.
-- A Google AI (Gemini) API Key.
+- An OpenAI API Key.
 
 ## Setup
 
@@ -22,7 +22,7 @@ This is a Langchain-powered orchestrator agent designed to integrate with a Bubb
     ```
 
 3.  **Authentication Files**:
-    - **Google AI API Key**: Create a `.env` file and add `GOOGLE_API_KEY=your_gemini_api_key_here`.
+    - **OpenAI API Key**: Create a `.env` file and add `OPENAI_API_KEY=your_openai_api_key_here`.
     - **GCP Service Account**: Save your Firestore service account JSON file as `service-account.json` in the root directory.
 
 ## How it Works

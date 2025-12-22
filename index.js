@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import fs from 'fs';
-import { createOrchestratorAgent } from './agent.js';
+import { createChatAgent, createRecommendationAgent } from './agent.js';
 
 // Check for .env file
 if (!fs.existsSync('.env')) {
@@ -12,8 +12,8 @@ if (!fs.existsSync('.env')) {
 dotenv.config();
 
 // Check for required environment variables
-if (!process.env.GOOGLE_API_KEY) {
-  console.error('\x1b[31m%s\x1b[0m', 'ERROR: GOOGLE_API_KEY is missing in .env file. Agent will not work.');
+if (!process.env.OPENAI_API_KEY) {
+  console.error('\x1b[31m%s\x1b[0m', 'ERROR: OPENAI_API_KEY is missing in .env file. Agent will not work.');
 }
 
 const app = express();
@@ -22,12 +22,17 @@ const port = process.env.PORT || 8000;
 app.use(cors());
 app.use(express.json());
 
-let orchestratorAgent;
+let chatAgent;
+let recommendationAgent;
 
-// Initialize agent
-createOrchestratorAgent().then(agent => {
-  orchestratorAgent = agent;
-  console.log("Orchestrator Agent initialized");
+// Initialize agents
+Promise.all([
+  createChatAgent(),
+  createRecommendationAgent()
+]).then(([cAgent, rAgent]) => {
+  chatAgent = cAgent;
+  recommendationAgent = rAgent;
+  console.log("Agents initialized");
 });
 
 app.get('/', (req, res) => {
@@ -37,12 +42,12 @@ app.get('/', (req, res) => {
 app.post('/chat', async (req, res) => {
   const { user_id, message, chat_history } = req.body;
 
-  if (!orchestratorAgent) {
-    return res.status(503).json({ error: "Agent is still initializing" });
+  if (!chatAgent) {
+    return res.status(503).json({ error: "Chat Agent is still initializing" });
   }
 
   try {
-    const result = await orchestratorAgent.invoke({
+    const result = await chatAgent.invoke({
       input: message,
       userId: user_id,
       chat_history: chat_history || [],
@@ -50,7 +55,39 @@ app.post('/chat', async (req, res) => {
 
     res.json({ response: result.output });
   } catch (error) {
-    console.error("Agent Error:", error);
+    console.error("Chat Agent Error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/recommendation', async (req, res) => {
+  const { user_id, message, chat_history } = req.body;
+
+  if (!recommendationAgent) {
+    return res.status(503).json({ error: "Recommendation Agent is still initializing" });
+  }
+
+  try {
+    const result = await recommendationAgent.invoke({
+      input: message || "Recommend some articles for me",
+      userId: user_id,
+      chat_history: chat_history || [],
+    });
+
+    let finalResponse = result.output;
+    
+    // Try to parse as JSON if it's a string that looks like a JSON array
+    try {
+      if (typeof finalResponse === 'string' && finalResponse.trim().startsWith('[')) {
+        finalResponse = JSON.parse(finalResponse.trim());
+      }
+    } catch (e) {
+      console.warn("Could not parse agent output as JSON, returning as string");
+    }
+
+    res.json({ response: finalResponse });
+  } catch (error) {
+    console.error("Recommendation Agent Error:", error);
     res.status(500).json({ error: error.message });
   }
 });
