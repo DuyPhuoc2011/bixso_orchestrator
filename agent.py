@@ -1,5 +1,5 @@
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.agents import AgentExecutor, create_openai_functions_agent
+from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.tools import tool
 from database import firestore_client
@@ -41,9 +41,6 @@ def create_orchestrator_agent():
         MessagesPlaceholder(variable_name="agent_scratchpad"),
     ])
 
-    # Note: Gemini supports function calling, which works with create_openai_functions_agent
-    # or create_tool_calling_agent. Langchain recommends create_tool_calling_agent for newer models.
-    from langchain.agents import create_tool_calling_agent
     agent = create_tool_calling_agent(llm, tools, prompt)
     agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
     
