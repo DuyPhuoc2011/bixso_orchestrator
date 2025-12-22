@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+langchain
+langchain-google-genai
+google-cloud-firestore
+python-dotenv
+pydantic
+
