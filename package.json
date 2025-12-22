@@ -1,0 +1,21 @@
+{
+  "name": "bixso-orchestrator",
+  "version": "1.0.0",
+  "description": "Langchain Orchestrator for Bubble and Firestore",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "@google-cloud/firestore": "^7.11.0",
+    "@langchain/google-genai": "^0.1.6",
+    "@langchain/core": "^0.3.27",
+    "langchain": "^0.3.8",
+    "express": "^4.21.2",
+    "dotenv": "^16.4.7",
+    "cors": "^2.8.5"
+  }
+}
+

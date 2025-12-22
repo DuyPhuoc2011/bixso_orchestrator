@@ -1,9 +1,0 @@
-fastapi
-uvicorn
-langchain>=0.2.0
-langchain-community>=0.2.0
-langchain-google-genai>=1.0.0
-google-cloud-firestore
-python-dotenv
-pydantic
-

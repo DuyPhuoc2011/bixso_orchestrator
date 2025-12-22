@@ -1,12 +1,12 @@
-# Bixso Orchestrator Agent
+# Bixso Orchestrator Agent (Node.js)
 
 This is a Langchain-powered orchestrator agent designed to integrate with a Bubble frontend and a Firestore database on GCP.
 
 ## Prerequisites
 
-- Python 3.9+
+- Node.js 18+
 - A Google Cloud Platform (GCP) project with Firestore enabled.
-- An OpenAI API Key.
+- A Google AI (Gemini) API Key.
 
 ## Setup
 
@@ -18,7 +18,7 @@ This is a Langchain-powered orchestrator agent designed to integrate with a Bubb
 
 2.  **Install dependencies**:
     ```bash
-    pip install -r requirements.txt
+    npm install
     ```
 
 3.  **Authentication Files**:
@@ -39,9 +39,9 @@ This is a Langchain-powered orchestrator agent designed to integrate with a Bubb
 
 ## Running the Application
 
-Start the FastAPI server:
+Start the server:
 ```bash
-python main.py
+npm start
 ```
 The server will be running at `http://localhost:8000`.
 
@@ -61,8 +61,7 @@ Use the Bubble API Connector to call the `/chat` endpoint.
 
 ## Project Structure
 
-- `main.py`: FastAPI server and API endpoints.
-- `agent.py`: Langchain agent configuration and tools.
-- `database.py`: Firestore client and database operations.
-- `requirements.txt`: Python dependencies.
-
+- `index.js`: Express server and API endpoints.
+- `agent.js`: Langchain agent configuration and tools.
+- `database.js`: Firestore client and database operations.
+- `package.json`: Node.js dependencies.
