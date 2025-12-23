@@ -69,6 +69,7 @@ async function createAgent(systemPrompt, temperature = 0) {
     modelName: "gpt-4o-mini",
     temperature: temperature,
     apiKey: process.env.OPENAI_API_KEY,
+    streaming: true,
   });
 
   const prompt = ChatPromptTemplate.fromMessages([

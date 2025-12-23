@@ -52,24 +52,31 @@ app.post('/chat', async (req, res) => {
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
+      res.setHeader('X-Accel-Buffering', 'no'); // Tell Nginx not to buffer
       res.flushHeaders();
 
-      const eventStream = await chatAgent.stream({
+      const eventStream = await chatAgent.streamEvents({
         input: message,
         userId: user_id,
         chat_history: chat_history || [],
-      });
+      }, { version: "v2" });
 
-      for await (const chunk of eventStream) {
-        if (chunk.output) {
-          // Clean the output chunk similar to the non-stream version
-          const cleanChunk = chunk.output
-            .replace(/\\n/g, ' ')
-            .replace(/\n/g, ' ')
-            .replace(/\r/g, ' ')
-            .replace(/\s+/g, ' ');
-          
-          res.write(`data: ${JSON.stringify({ text: cleanChunk })}\n\n`);
+      for await (const event of eventStream) {
+        // 'on_chat_model_stream' yields tokens as they are generated
+        if (event.event === "on_chat_model_stream") {
+           const content = event.data.chunk.content;
+           // We only want to stream if there is actual text content (not tool calls)
+           if (content && typeof content === 'string') {
+              const cleanChunk = content
+                .replace(/\\n/g, ' ')
+                .replace(/\n/g, ' ')
+                .replace(/\r/g, ' ')
+                .replace(/\s+/g, ' ');
+              
+              if (cleanChunk) {
+                res.write(`data: ${JSON.stringify({ text: cleanChunk })}\n\n`);
+              }
+           }
         }
       }
       res.write('data: [DONE]\n\n');
