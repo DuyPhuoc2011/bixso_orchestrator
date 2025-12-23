@@ -53,7 +53,15 @@ app.post('/chat', async (req, res) => {
       chat_history: chat_history || [],
     });
 
-    res.json({ response: result.output });
+    // Clean up response: remove literal \n, \r, and double spaces
+    let cleanResponse = result.output
+      .replace(/\\n/g, ' ')
+      .replace(/\n/g, ' ')
+      .replace(/\r/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    res.json({ response: cleanResponse });
   } catch (error) {
     console.error("Chat Agent Error:", error);
     res.status(500).json({ error: error.message });
