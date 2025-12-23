@@ -40,13 +40,43 @@ app.get('/', (req, res) => {
 });
 
 app.post('/chat', async (req, res) => {
-  const { user_id, message, chat_history } = req.body;
+  const { user_id, message, chat_history, stream } = req.body;
 
   if (!chatAgent) {
     return res.status(503).json({ error: "Chat Agent is still initializing" });
   }
 
   try {
+    if (stream) {
+      // Setup SSE headers
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.flushHeaders();
+
+      const eventStream = await chatAgent.stream({
+        input: message,
+        userId: user_id,
+        chat_history: chat_history || [],
+      });
+
+      for await (const chunk of eventStream) {
+        if (chunk.output) {
+          // Clean the output chunk similar to the non-stream version
+          const cleanChunk = chunk.output
+            .replace(/\\n/g, ' ')
+            .replace(/\n/g, ' ')
+            .replace(/\r/g, ' ')
+            .replace(/\s+/g, ' ');
+          
+          res.write(`data: ${JSON.stringify({ text: cleanChunk })}\n\n`);
+        }
+      }
+      res.write('data: [DONE]\n\n');
+      return res.end();
+    }
+
+    // Non-streaming logic (existing)
     const result = await chatAgent.invoke({
       input: message,
       userId: user_id,
